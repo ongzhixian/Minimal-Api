@@ -24,4 +24,4 @@ Note: Redoc does not have function where you can execute the API. Its meant pure
 
 # Scalar
 
-https://localhost:9004/scalar/v1
+https://localhost:9004/scalar/v1    
