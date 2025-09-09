@@ -46,6 +46,14 @@ if (app.Environment.IsDevelopment())
         // Route prefix to access Swagger UI; default is "/swagger/index.html"
         options.RoutePrefix = "swagger"; 
     });
+
+    app.UseReDoc(options =>
+    {
+        
+        options.DocumentTitle = "Open API - ReDoc";
+        options.RoutePrefix = "api-docs"; // change relative path to the UI
+        options.SpecUrl("/openapi/v1.json");
+    });
 }
 
 
