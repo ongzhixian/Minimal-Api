@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Minimal.WebApi", "Minimal.WebApi\Minimal.WebApi.csproj", "{FE1E7B73-4807-4ADA-866F-5077F9D7B205}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Clarus", "Minimal.WebApi\Clarus.csproj", "{FE1E7B73-4807-4ADA-866F-5077F9D7B205}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -30,5 +30,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {19658AAE-54B4-4F74-84D1-FA0314128D4B}
 	EndGlobalSection
 EndGlobal
