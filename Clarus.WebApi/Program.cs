@@ -1,3 +1,6 @@
+using Clarus.Endpoints;
+using Clarus.Extensions;
+
 using Expo.Models;
 
 using Microsoft.OpenApi.Models;
@@ -13,6 +16,8 @@ Log.Logger = new LoggerConfiguration()
 try
 {
     Log.Information("Starting web application");
+
+    Console.WriteLine(Clarus.EndpointSourceGenerator.HelloWorld.SayHello());
 
     var builder = WebApplication.CreateBuilder(args);
 
@@ -123,7 +128,11 @@ try
 
     //Minimal.WebApi.Routes.WeatherForecast.RegisterEndpoints(app);
     //app.RegisterWeatherForecastApiEndpoints();
-
+    //app.RegisterWeatherForecastApiEndpoints();
+    //app.RegisterEchoApiEndpoints();
+    //app.RegisterEchoApiEndpoints();
+    //app.RegisterEndpoints(); // Modular registration
+    //app.RegisterEndpoints();
 
     app.Run();
 
