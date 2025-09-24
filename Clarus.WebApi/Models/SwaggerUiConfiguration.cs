@@ -1,4 +1,4 @@
-﻿namespace Expo.Models;
+﻿namespace Clarus.Models;
 
 public class SwaggerUiConfiguration
 {

@@ -1,7 +1,5 @@
 using Clarus.Endpoints;
-using Clarus.Extensions;
 
-using Expo.Models;
 
 using Microsoft.OpenApi.Models;
 
@@ -16,8 +14,6 @@ Log.Logger = new LoggerConfiguration()
 try
 {
     Log.Information("Starting web application");
-
-    Console.WriteLine(Clarus.EndpointSourceGenerator.HelloWorld.SayHello());
 
     var builder = WebApplication.CreateBuilder(args);
 
@@ -104,14 +100,18 @@ try
             //options.SwaggerEndpoint("/swagger/v1/swagger.json", "v1");
         });
 
+        #region SETUP FOR REDOC
         app.UseReDoc(options =>
         {
             options.DocumentTitle = "Open API - ReDoc";
             options.RoutePrefix = "api-docs"; // change relative path to the UI
             options.SpecUrl("/openapi/v1.json");
         });
+        #endregion
 
+        #region SETUP FOR SCALAR
         app.MapScalarApiReference();
+        #endregion
 
         app.MapOpenApi();
     }
@@ -129,8 +129,7 @@ try
     //Minimal.WebApi.Routes.WeatherForecast.RegisterEndpoints(app);
     //app.RegisterWeatherForecastApiEndpoints();
     //app.RegisterWeatherForecastApiEndpoints();
-    //app.RegisterEchoApiEndpoints();
-    //app.RegisterEchoApiEndpoints();
+    app.RegisterSampleApiEndpoints();
     //app.RegisterEndpoints(); // Modular registration
     //app.RegisterEndpoints();
 
