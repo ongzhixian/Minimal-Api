@@ -15,10 +15,8 @@ public static partial class WebApplicationExtensions
 
         RouteGroupBuilder apiGroup = app.MapGroup(routePrefix);
 
-        SampleApi api = new SampleApi(
-            app.Services.GetRequiredService<ILogger<SampleApi>>()
-        );
-
+        SampleApi api = app.Services.GetRequiredService<SampleApi>();
+        
         apiGroup.MapGet("echo", api.GetEcho)
             //.Accepts<string>(System.Net.Mime.MediaTypeNames.Text.Plain)
             .Produces<string>(StatusCodes.Status200OK)
