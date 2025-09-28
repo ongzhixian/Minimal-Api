@@ -22,17 +22,15 @@ try
 
     builder.Services.AddSerilog();
 
-    #region CONFIGURATIONS -- TO MOVE TO CONFIGURATIONS FOLDER AT A LATER DATE
-
     builder.Services.Configure<Microsoft.AspNetCore.Server.Kestrel.Core.KestrelServerOptions>(options =>
     {
         options.AddServerHeader = false;
     });
-    #endregion
 
     // TODO: Add CORs
 
 
+    // TODO: Keeping comments here until we refactor this! *fumes*
     // Define OpenApi definitions.
     // 2 approaches:
     // 1.   Define the definitions in appsettings.json
@@ -52,9 +50,26 @@ try
     //builder.Configuration.GetSection("SwaggerDocs").Bind(swaggerDocsConfiguration);
 
 
+    // TODO: Refactor to ReadyPerfectly.OpenApi
     builder.Services.AddOpenApi(); // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+    foreach (var config in apiDefinitions)
+    {
+        builder.Services.AddOpenApi(config.DocumentId, (openApiOptions) =>
+        {
+            openApiOptions.AddDocumentTransformer((document, context, cancellationToken) =>
+            {
+                document.Info = new OpenApiInfo(defaultOpenApiInfo)
+                {
+                    Version = config.Version,
+                    Title = config.Title,
+                    Description = config.Description,
+                };
+                return Task.CompletedTask;
+            });
+        });
+    }
 
-    builder.Services.AddEndpointsApiExplorer();
+    // TODO: Refactor to ReadyPerfectly.Swagger
     builder.Services.AddSwaggerGen(options =>
     {
         foreach (var config in apiDefinitions)
@@ -73,31 +88,15 @@ try
         //    options.SwaggerDoc(config.Key, config.Value);
     });
 
-    foreach (var config in apiDefinitions)
-    {
-        builder.Services.AddOpenApi(config.DocumentId, (openApiOptions) =>
-        {
-            openApiOptions.AddDocumentTransformer((document, context, cancellationToken) =>
-            {
-                document.Info = new OpenApiInfo(defaultOpenApiInfo)
-                {
-                    Version = config.Version,
-                    Title = config.Title,
-                    Description = config.Description,
-                };
-                return Task.CompletedTask;
-            });
-        });
-    }
+    builder.Services.AddEndpointsApiExplorer();
 
-
-    // 
     builder.Services.AddScoped<ClarusServiceApi>();
     builder.Services.AddSingleton<SampleApi>();
 
     var app = builder.Build();
 
     // Configure the HTTP request pipeline.
+
     if (app.Environment.IsDevelopment())
     {
         app.UseSwagger();
@@ -153,42 +152,10 @@ try
     app.UseStaticFiles();
 
     // Registering endpoints
-    app.RegisterSampleApiEndpoints();
-    //Minimal.WebApi.Routes.WeatherForecast.RegisterEndpoints(app);
-    //app.RegisterWeatherForecastApiEndpoints();
-    //app.RegisterWeatherForecastApiEndpoints();
-    //app.RegisterEndpoints(); // Modular registration
-    //app.RegisterEndpoints();
 
-    //IEnumerable<Type> types = TypeUtility.GetTypesImplementing<IApiEndpointMapper>() ?? [];
-    //foreach (var apiMapper in apiMappers)
-    //{
-    //    apiMapper.MapApiEndpoints(app);
-    //}
-
-    //TypeUtility.GetTypesImplementing<IApiEndpointMapper>().Instances<IApiEndpointMapper>();
-    //var types = TypeUtility.GetInstancesOfTypesImplementing<IApiEndpointMapper>();
-
-    //var targetType = typeof(IApiEndpointMapper);
-    //foreach (var type in types)
-    //{
-    //    if (type is { IsClass: true, IsAbstract: false, IsGenericTypeDefinition: false } &&
-    //        targetType.IsAssignableFrom(type))
-    //    {
-    //        IApiEndpointMapper x = (IApiEndpointMapper)Activator.CreateInstance(type)!;
-    //        x.MapApiEndpoints(app);
-    //    }
-    //}
-
-    //app.MapApiEndpoints();
-
-    app.MapGet("hello", () =>
-    {
-        return Results.Ok("HELOW ORLD");
-    });
+    app.MapApiEndpoints();
 
     app.Run();
-
 
 }
 catch (Exception ex)
