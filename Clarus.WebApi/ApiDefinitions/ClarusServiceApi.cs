@@ -1,8 +1,4 @@
-﻿using System;
-using System.Net.Mime;
-
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.OpenApi.Models;
+﻿using Microsoft.AspNetCore.Mvc;
 
 using ReadyPerfectly.AspNetCore;
 using ReadyPerfectly.OpenApi.Extensions;
