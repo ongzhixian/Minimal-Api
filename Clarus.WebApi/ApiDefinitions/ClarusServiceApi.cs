@@ -20,9 +20,27 @@ public class ClarusServiceApi : IApiEndpointMapper
 
     public void MapApiEndpoints(IEndpointRouteBuilder endpointRouteBuilder)
     {
+        MapHealthApiEndPoints(endpointRouteBuilder.MapGroup("health"));
+
         MapDateTimeApiEndPoints(endpointRouteBuilder.MapGroup("datetime"));
 
         //MapCurltureApiEndPoints(endpointRouteBuilder.MapGroup("culture"));
+    }
+
+    private void MapHealthApiEndPoints(RouteGroupBuilder routeGroupBuilder)
+    {
+        routeGroupBuilder.MapGet(string.Empty, () =>
+        {
+            return Results.Ok("Healthy - OK");
+        }).Produces<DateTime>(StatusCodes.Status200OK)
+        .WithOpenApi(operation =>
+        {
+            operation.Summary = "Gets API health";
+            operation.Description = "Returns the health status of APIs";
+            operation.OperationId = "api-health";
+            operation.Tags = [new() { Name = "Health" }];
+            return operation;
+        });
     }
 
     private void MapDateTimeApiEndPoints(RouteGroupBuilder routeGroupBuilder)
