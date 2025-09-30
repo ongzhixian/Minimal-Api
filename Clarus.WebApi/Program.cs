@@ -1,5 +1,4 @@
 using Clarus.ApiDefinitions;
-using Clarus.Endpoints;
 using Clarus.Extensions;
 
 using Microsoft.OpenApi.Models;
@@ -91,7 +90,8 @@ try
     builder.Services.AddEndpointsApiExplorer();
 
     builder.Services.AddScoped<ClarusServiceApi>();
-    builder.Services.AddSingleton<SampleApi>();
+
+    builder.Services.AddHealthChecks();
 
     var app = builder.Build();
 
@@ -154,6 +154,8 @@ try
     // Registering endpoints
 
     app.MapApiEndpoints();
+
+    app.MapHealthChecks("health");
 
     app.Run();
 
