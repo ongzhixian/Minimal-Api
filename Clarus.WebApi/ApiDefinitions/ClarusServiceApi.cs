@@ -16,12 +16,8 @@ public class ClarusServiceApi : IApiEndpointMapper
 {
     private readonly ILogger logger = null!;
 
-    public ClarusServiceApi()
-    {
-        // Parameterless constructor for API discovery via reflection.
-    }
 
-    public ClarusServiceApi(ILogger<ClarusServiceApi> logger) : this()
+    public ClarusServiceApi(ILogger<ClarusServiceApi> logger)
     {
         this.logger = logger;
     }
@@ -120,12 +116,16 @@ public class ClarusServiceApi : IApiEndpointMapper
         return Results.Ok(DateTime.Now);
     }
 
-    private IResult GetDateTimeForTimeZone(string timeZoneInfoId)
+    private IResult GetDateTimeForTimeZone(string timeZoneInfoId = "UTC")
     {
         var timeZoneInfo = TimeZoneInfo.GetSystemTimeZones()
-        .FirstOrDefault(r => r.Id.Equals(timeZoneInfoId, StringComparison.InvariantCultureIgnoreCase))
-        ?? TimeZoneInfo.Utc;
+            .FirstOrDefault(r => r.Id.Equals(timeZoneInfoId, StringComparison.InvariantCultureIgnoreCase))
+            ?? TimeZoneInfo.Utc;
 
-        return Results.Ok<DateTime>(TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZoneInfo));
+
+        var result = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZoneInfo);
+        logger.LogInformation("{FunctionName} return {GetDateTimeForTimeZoneResult}", nameof(GetDateTimeForTimeZone), result);
+
+        return Results.Ok<DateTime>(result);
     }
 }
