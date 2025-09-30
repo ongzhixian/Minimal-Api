@@ -420,3 +420,4 @@ FodyWeavers.xsd
 .vs/
 
 **/backup/
+**/logs/
