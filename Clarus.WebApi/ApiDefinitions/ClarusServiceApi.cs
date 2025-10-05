@@ -1,6 +1,12 @@
-﻿using Microsoft.Extensions.Diagnostics.HealthChecks;
+﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc.Formatters;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.OpenApi.Any;
+using Microsoft.OpenApi.Models;
 
 using ReadyPerfectly.AspNetCore;
+using ReadyPerfectly.OpenApi.Extensions;
 using ReadyPerfectly.Swagger;
 
 namespace Clarus.ApiDefinitions;
@@ -22,6 +28,8 @@ public class ClarusServiceApi : IApiEndpointMapper
         MapHealthApiEndPoints(endpointRouteBuilder.MapGroup("health"));
 
         MapDateTimeApiEndPoints(endpointRouteBuilder.MapGroup("datetime"));
+
+        //MapTimeZoneApiEndPoints(endpointRouteBuilder.MapGroup("timezone"));
     }
 
     private void MapHealthApiEndPoints(RouteGroupBuilder routeGroupBuilder)
@@ -36,6 +44,7 @@ public class ClarusServiceApi : IApiEndpointMapper
             operation.Description = "Returns the health status of APIs";
             operation.OperationId = "api-health";
             operation.Tags = [new() { Name = "Health" }];
+
             return operation;
         });
 
@@ -44,78 +53,126 @@ public class ClarusServiceApi : IApiEndpointMapper
     private void MapDateTimeApiEndPoints(RouteGroupBuilder routeGroupBuilder)
     {
         routeGroupBuilder.MapGet(string.Empty, GetDateTimeForTimeZone)
-        //.Produces<DateTime>(StatusCodes.Status200OK)
-        .WithOpenApi(operation =>
-        {
-            // Note: Use WithOpenApi() extension with caution;
-            // I think the generated OpenApi JSON differs between built-in and Swagger.
-            operation.Summary = "Gets date time";
-            operation.Description = "Returns the datetime of server";
-            operation.OperationId = nameof(GetDateTimeForTimeZone);
-            operation.Tags = [new() { Name = "DateTime" }];
-            return operation;
-        });
-
-
-        //routeGroupBuilder.MapGet("timezone-id", (string timeZoneInfoId = "UTC") =>
-        //{
-        //    return TimeZoneInfo.GetSystemTimeZones().Select(r => r.Id).OrderBy(r => r);
-        //}).Produces<IEnumerable<string>>(StatusCodes.Status200OK)
-        ////.OpenApiDocumentation(operationId: "timezone-id")
-        //;
-
-
-        //routeGroupBuilder.MapGet("timezone/{timeZoneInfoId}", ([FromRoute] string timeZoneInfoId) =>
-        //{
-        //    if (TimeZoneInfo.TryFindSystemTimeZoneById(timeZoneInfoId, out var systemTimeZone))
-        //        return Results.Ok(systemTimeZone);
-
-        //    return Results.NotFound($"{timeZoneInfoId}");
-        //})
-        //    //.WithOpenApi(op =>
-        //    //{
-        //    //    op.Summary = "SOme this";
-        //    //    return op;
-        //    //})
-        //    //.WithSummary("Some sumamry")
-        //    //.WithDescription("Some description")
-        //    //.WithTags("Tag 1", "Tag 2")
-        //.OpenApiDocumentation();
-
-        //.Produces<TimeZoneInfo>(StatusCodes.Status200OK)
-        //.Produces(StatusCodes.Status404NotFound)
+        //.Produces<DateTime>(StatusCodes.Status200OK)        // uses builder.WithMetadata(new ProducesResponseTypeMetadata(statusCode, responseType ?? typeof(void), contentTypes));
+        .WithName(nameof(GetDateTimeForTimeZone))           // uses builder.WithMetadata(new EndpointNameMetadata(endpointName), new RouteNameMetadata(endpointName));
+        .WithSummary("Gets date time")                      // uses builder.WithMetadata(new EndpointSummaryAttribute(summary));
+        .WithDescription("Returns the datetime of server")  // uses builder.WithMetadata(new EndpointDescriptionAttribute(description));
+        .WithTags("DateTime")                               // uses builder.WithMetadata(new TagsAttribute(tags));
+        //.WithOpenApi()                                      // uses builder.Finally(builder => AddAndConfigureOperationForEndpoint(builder));
         //.WithOpenApi(operation =>
         //{
-        //    operation.OperationId = "some-operation-id";
-        //    operation.Summary = "Get TimeZoneInfo";
-        //    operation.Description = "Returns TimeZoneInfo of timeZoneInfoId";
-        //    operation.Tags = [new() { Name = "DateTime" }];
+        //    // Note: Use WithOpenApi() extension with caution;
+        //    // I think the generated OpenApi JSON differs between built-in and Swagger.
+        //    //operation.Summary = "Gets date time";
+        //    //operation.Description = "Returns the datetime of server";
+        //    ////operation.OperationId = nameof(GetDateTimeForTimeZone);
+        //    //operation.Tags = [new() { Name = "DateTime" }];
 
-        //    System.Diagnostics.Debugger.Break();
-        //    //operation.Parameters
-        //    //operation.Responses
-        //    operation.Parameters[0].Description = "AOAMA";
-        //    operation.Responses.Add("204", new OpenApiResponse
+        //    // TODO: Simplify this:
+        //    if (operation.Parameters
+        //        .FirstOrDefault(r => r.Name.Equals("timeZoneInfoId", StringComparison.InvariantCultureIgnoreCase))
+        //        is OpenApiParameter parameter)
         //    {
-        //        Description = "Some 204 desc",
-        //    });
+        //        // For server
+        //        parameter.Schema = new OpenApiSchema
+        //        {
+        //            Type = "string",
+        //            //Format = "string", 
+        //            //Default = new OpenApiString("asd"),
+        //            //Example = new OpenApiString("UTC")
+        //        };
+
+        //        parameter.Examples = TimeZoneInfo.GetSystemTimeZones().ToDictionary(r => r.Id, r => new OpenApiExample
+        //        {
+        //            Summary = $"{r.BaseUtcOffset} {r.StandardName}",
+        //            Value = new OpenApiString(r.Id)
+        //        });
+
+        //        parameter.Example = parameter.Examples["Singapore Standard Time"].Value;
+        //    }
+
+
+        //    var responseExamples = new Dictionary<string, OpenApiExample>
+        //    {
+        //        ["taipei"] = new OpenApiExample
+        //        {
+        //            Summary = "Taipei Standard Time",
+        //            Value = new OpenApiString("2025-10-04T08:12:59+08:00")
+        //        },
+        //        ["singapore"] = new OpenApiExample
+        //        {
+        //            Summary = "Singapore Standard Time",
+        //            Value = new OpenApiString("2025-10-04T08:12:59+09:00")
+        //        }
+        //    };
+
+        //    operation.Responses["200"].Content = new Dictionary<string, OpenApiMediaType>
+        //    {
+        //        ["application/json"] = new OpenApiMediaType
+        //        {
+        //            Schema = new OpenApiSchema
+        //            {
+        //                Type = "string",
+        //                Format = "date-time"
+        //            },
+        //            Example = new OpenApiString("2025-10-04T08:12:59+09:00"), // Singapore as default
+        //            Examples = responseExamples,
+        //        }
+        //    };
 
         //    return operation;
         //})
+        .WithOperation()
+        .DebugOpenApiDocumentation()
         ;
     }
 
 
-    private IResult GetDateTimeForTimeZone(string timeZoneInfoId = "UTC")
+    //private Results<BadRequest, Ok<DateTime>> GetDateTimeForTimeZone([Microsoft.AspNetCore.Mvc.FromQuery]string timeZoneInfoId)
+    private IResult GetDateTimeForTimeZone([Microsoft.AspNetCore.Mvc.FromQuery] string timeZoneInfoId)
     {
         var timeZoneInfo = TimeZoneInfo.GetSystemTimeZones()
             .FirstOrDefault(r => r.Id.Equals(timeZoneInfoId, StringComparison.InvariantCultureIgnoreCase))
             ?? TimeZoneInfo.Utc;
 
+        System.Diagnostics.Debugger.Break();
 
         var result = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZoneInfo);
         logger.LogInformation("{FunctionName} return {GetDateTimeForTimeZoneResult}", nameof(GetDateTimeForTimeZone), result);
 
-        return Results.Ok<DateTime>(result);
+        // Why 
+        //IResult x1 = Results.Ok<DateTime>(result);
+        //Microsoft.AspNetCore.Http.HttpResults.Ok<DateTime> x2 = TypedResults.Ok<DateTime>(result);
+
+
+        //return TypedResults.Ok<DateTime>(result);   // uses return union type Results<BadRequest, Ok<DateTime>> // 
+        return Results.Ok<DateTime>(result);      // uses return type IResult
+
+        // Why use TypedResults over Results
+        // Functionally, they don't make much of a difference.
+        // The main area where they affect are in unit testing and OpenApi
+        // Using IResult as return type means we need to cast it unit testing.
+        // In the context of OpenApi, it means we NEED to specify a Produces*Attribute
+        // We can omit Produces*Attribute using TypedResults
+
+    }
+
+    private void MapTimeZoneApiEndPoints(RouteGroupBuilder routeGroupBuilder)
+    {
+        routeGroupBuilder.MapGet(string.Empty, () =>
+        {
+            return Results.Ok(TimeZoneInfo.GetSystemTimeZones());
+        }).Produces<string>(StatusCodes.Status200OK)
+        //.WithOpenApi(operation =>
+        //{
+        //    operation.Summary = "Gets API health";
+        //    operation.Description = "Returns the health status of APIs";
+        //    operation.OperationId = "api-health";
+        //    operation.Tags = [new() { Name = "Health" }];
+
+        //    return operation;
+        //})
+        ;
+
     }
 }
