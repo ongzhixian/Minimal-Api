@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Mvc.Formatters;
+﻿using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
@@ -52,6 +50,26 @@ public class ClarusServiceApi : IApiEndpointMapper
 
     private void MapDateTimeApiEndPoints(RouteGroupBuilder routeGroupBuilder)
     {
+        var timeZoneInfoExamples = TimeZoneInfo.GetSystemTimeZones().ToDictionary(r => r.Id, r => new OpenApiExample
+        {
+            Summary = $"{r.BaseUtcOffset} {r.StandardName}",
+            Value = new OpenApiString(r.Id)
+        });
+
+        var responseExamples = new Dictionary<string, OpenApiExample>
+        {
+            ["taipei"] = new OpenApiExample
+            {
+                Summary = "Taipei Standard Time",
+                Value = new OpenApiString("2025-10-04T08:12:59+08:00")
+            },
+            ["singapore"] = new OpenApiExample
+            {
+                Summary = "Singapore Standard Time",
+                Value = new OpenApiString("2025-10-04T08:12:59+09:00")
+            }
+        };
+
         routeGroupBuilder.MapGet(string.Empty, GetDateTimeForTimeZone)
         //.Produces<DateTime>(StatusCodes.Status200OK)        // uses builder.WithMetadata(new ProducesResponseTypeMetadata(statusCode, responseType ?? typeof(void), contentTypes));
         .WithName(nameof(GetDateTimeForTimeZone))           // uses builder.WithMetadata(new EndpointNameMetadata(endpointName), new RouteNameMetadata(endpointName));
@@ -122,14 +140,34 @@ public class ClarusServiceApi : IApiEndpointMapper
 
         //    return operation;
         //})
+        .WithOperationParameter("timeZoneInfoId", new OpenApiSchema
+        {
+            Type = "string",
+        }, timeZoneInfoExamples, timeZoneInfoExamples["Singapore Standard Time"].Value) // Hmm...kind of awkward looking; shelved refactoring for now
+        .WithOperationResponse("200", new Dictionary<string, OpenApiMediaType>
+        {
+            ["application/json"] = new OpenApiMediaType
+            {
+                Schema = new OpenApiSchema
+                {
+                    Type = "string",
+                    Format = "date-time"
+                },
+                Examples = responseExamples,
+                Example = responseExamples["singapore"].Value,
+                
+                //Example = new OpenApiString("2025-10-04T08:12:59+09:00"), // Singapore as default
+            }
+        })
         .WithOperation()
-        .DebugOpenApiDocumentation()
+        
+        //.DebugOpenApiDocumentation()
         ;
     }
 
 
-    //private Results<BadRequest, Ok<DateTime>> GetDateTimeForTimeZone([Microsoft.AspNetCore.Mvc.FromQuery]string timeZoneInfoId)
-    private IResult GetDateTimeForTimeZone([Microsoft.AspNetCore.Mvc.FromQuery] string timeZoneInfoId)
+    private Results<BadRequest, Ok<DateTime>> GetDateTimeForTimeZone([Microsoft.AspNetCore.Mvc.FromQuery]string timeZoneInfoId)
+    //private IResult GetDateTimeForTimeZone([Microsoft.AspNetCore.Mvc.FromQuery] string timeZoneInfoId)
     {
         var timeZoneInfo = TimeZoneInfo.GetSystemTimeZones()
             .FirstOrDefault(r => r.Id.Equals(timeZoneInfoId, StringComparison.InvariantCultureIgnoreCase))
@@ -144,9 +182,8 @@ public class ClarusServiceApi : IApiEndpointMapper
         //IResult x1 = Results.Ok<DateTime>(result);
         //Microsoft.AspNetCore.Http.HttpResults.Ok<DateTime> x2 = TypedResults.Ok<DateTime>(result);
 
-
-        //return TypedResults.Ok<DateTime>(result);   // uses return union type Results<BadRequest, Ok<DateTime>> // 
-        return Results.Ok<DateTime>(result);      // uses return type IResult
+        return TypedResults.Ok<DateTime>(result);   // uses return union type Results<BadRequest, Ok<DateTime>> // 
+        //return Results.Ok<DateTime>(result);      // uses return type IResult
 
         // Why use TypedResults over Results
         // Functionally, they don't make much of a difference.
